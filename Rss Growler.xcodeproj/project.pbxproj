@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		2507FAFF0BD287C40097C6E9 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2507FAFE0BD287C40097C6E9 /* Growl.framework */; };
 		2507FB0B0BD287D50097C6E9 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2507FAFE0BD287C40097C6E9 /* Growl.framework */; };
+		2524C2FC0C1253E80073EE94 /* RGWindow.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2524C2FA0C1253E80073EE94 /* RGWindow.h */; };
+		2524C2FD0C1253E80073EE94 /* RGWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 2524C2FB0C1253E80073EE94 /* RGWindow.m */; };
+		2524C3FA0C125A610073EE94 /* Rss_Growler_DataModel2.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 2524C3F90C125A610073EE94 /* Rss_Growler_DataModel2.xcdatamodel */; };
+		2524C46F0C1262AC0073EE94 /* menuicon_sel.png in Resources */ = {isa = PBXBuildFile; fileRef = 2524C46E0C1262AC0073EE94 /* menuicon_sel.png */; };
 		25ED330F0BD0508C00B49D3D /* RSSGrowlerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 25ED33080BD0508C00B49D3D /* RSSGrowlerController.m */; };
 		25ED33100BD0508C00B49D3D /* GrowlerObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 25ED330A0BD0508C00B49D3D /* GrowlerObject.m */; };
 		25ED33110BD0508C00B49D3D /* RSSFeed.m in Sources */ = {isa = PBXBuildFile; fileRef = 25ED330C0BD0508C00B49D3D /* RSSFeed.m */; };
@@ -33,6 +37,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				2507FB0B0BD287D50097C6E9 /* Growl.framework in CopyFiles */,
+				2524C2FC0C1253E80073EE94 /* RGWindow.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -42,6 +47,10 @@
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		2507FAFE0BD287C40097C6E9 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
+		2524C2FA0C1253E80073EE94 /* RGWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RGWindow.h; sourceTree = "<group>"; };
+		2524C2FB0C1253E80073EE94 /* RGWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RGWindow.m; sourceTree = "<group>"; };
+		2524C3F90C125A610073EE94 /* Rss_Growler_DataModel2.xcdatamodel */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = wrapper.xcdatamodel; path = Rss_Growler_DataModel2.xcdatamodel; sourceTree = "<group>"; };
+		2524C46E0C1262AC0073EE94 /* menuicon_sel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuicon_sel.png; sourceTree = "<group>"; };
 		25ED33070BD0508C00B49D3D /* RSSGrowlerController.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RSSGrowlerController.h; sourceTree = "<group>"; };
 		25ED33080BD0508C00B49D3D /* RSSGrowlerController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = RSSGrowlerController.m; sourceTree = "<group>"; };
 		25ED33090BD0508C00B49D3D /* GrowlerObject.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GrowlerObject.h; sourceTree = "<group>"; };
@@ -97,6 +106,8 @@
 				25ED330E0BD0508C00B49D3D /* RSSItem.m */,
 				25F204D20BD1B77D0013D9E1 /* SubLink.h */,
 				25F204D30BD1B77D0013D9E1 /* SubLink.m */,
+				2524C2FA0C1253E80073EE94 /* RGWindow.h */,
+				2524C2FB0C1253E80073EE94 /* RGWindow.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -155,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				25F206EA0BD1D6900013D9E1 /* menuicon.png */,
+				2524C46E0C1262AC0073EE94 /* menuicon_sel.png */,
 				25F206890BD1D5450013D9E1 /* Growler Icon.icns */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
@@ -176,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				770B37EC0679A11B001EADE2 /* Rss_Growler_DataModel.xcdatamodel */,
+				2524C3F90C125A610073EE94 /* Rss_Growler_DataModel2.xcdatamodel */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -226,6 +239,7 @@
 				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				25F206EB0BD1D6900013D9E1 /* menuicon.png in Resources */,
+				2524C46F0C1262AC0073EE94 /* menuicon_sel.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,6 +258,8 @@
 				25ED33110BD0508C00B49D3D /* RSSFeed.m in Sources */,
 				25ED33120BD0508C00B49D3D /* RSSItem.m in Sources */,
 				25F204D50BD1B77D0013D9E1 /* SubLink.m in Sources */,
+				2524C2FD0C1253E80073EE94 /* RGWindow.m in Sources */,
+				2524C3FA0C125A610073EE94 /* Rss_Growler_DataModel2.xcdatamodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

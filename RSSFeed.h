@@ -38,6 +38,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 -(NSDate *)parseItem:(NSXMLNode *)item;
 -(void)checkFeed;
 -(void)cleanupOldItems;
+-(NSSet *)cachedIDs;
 -(NSArray *)firstFeedItems:(unsigned)count;
 -(NSMenuItem *)feedMenuItem:(NSSet *)topSet;
 -(void)setErrorMessage:(NSString *)string;

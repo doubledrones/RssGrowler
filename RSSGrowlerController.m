@@ -17,6 +17,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 #import "GrowlerObject.h"
 #import "RSSFeed.h"
 #import "RSSItem.h"
+#import "Rss_Growler_AppDelegate.h"
 
 NSString *kCheckIntervalTime = @"Check Interval";
 NSString *kShowTopEntriesCount = @"Show Top Entries Count";
@@ -32,13 +33,13 @@ NSString *kEnableMenuSubLinks = @"Enable SubLinks in Menu";
 +(id)defaultsDictionary
 {
 	return [NSDictionary dictionaryWithObjectsAndKeys:
-		[NSNumber numberWithDouble:300.0],		kCheckIntervalTime,
+		[NSNumber numberWithDouble:1800.0],		kCheckIntervalTime,
 		[NSNumber numberWithInt:10],			kShowTopEntriesCount,
 		[NSNumber numberWithInt:100],			kMaxEntryHistory,
 		[NSNumber numberWithBool:YES],			kHideTopFromHistory,
 		[NSNumber numberWithBool:NO],			kGrowlClickAction,
 		[NSNumber numberWithBool:NO],			kGrowlListSeparately,
-		[NSNumber numberWithBool:YES],			kEnablePageCaching,
+		[NSNumber numberWithBool:NO],			kEnablePageCaching,
 		[NSNumber numberWithBool:YES],			kEnableMenuSubLinks,
 		nil];
 }
@@ -62,6 +63,19 @@ NSString *kEnableMenuSubLinks = @"Enable SubLinks in Menu";
 	[manageWindow setLevel:NSFloatingWindowLevel];
 	[prefWindow setLevel:NSFloatingWindowLevel];
 	[self recreateTimerAndUpdate];
+	
+	NSFileManager *manager = [NSFileManager defaultManager];
+	NSString *cachesFolder = [[NSApp delegate] cachesFolder];
+	NSSet *cachedIDs = [self allCachedIDs];
+	NSMutableSet *contents = [NSMutableSet setWithArray:[manager directoryContentsAtPath:cachesFolder]];
+	[contents minusSet:cachedIDs];
+
+	id e = [contents objectEnumerator];
+	id anObject;
+	while(anObject = [e nextObject]){
+		NSString *file = [cachesFolder stringByAppendingPathComponent:anObject];
+		[manager removeFileAtPath:file handler:nil];
+	}
 }
 
 -(void)defaultsChanged:(NSNotification *)aNotification
@@ -100,12 +114,25 @@ NSString *kEnableMenuSubLinks = @"Enable SubLinks in Menu";
 	return array;
 }
 
+-(NSSet *)allCachedIDs
+{
+	NSMutableSet *allCachedIDs = [NSMutableSet set];
+	id e = [[self rssFeeds] objectEnumerator];
+	id anObject;
+	while(anObject = [e nextObject]){
+		[allCachedIDs unionSet:[anObject cachedIDs]];
+	}
+	
+	return allCachedIDs;
+}
+
 -(void)activateStatusMenu
 {
     statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     [statusItem retain];
 	
 	[statusItem setImage:[NSImage imageNamed:@"menuicon"]];
+	[statusItem setAlternateImage:[NSImage imageNamed:@"menuicon_sel"]];
     [statusItem setHighlightMode:YES];
     [statusItem setMenu:[self feedsMenu]];
 }

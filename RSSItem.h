@@ -20,6 +20,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 @interface RSSItem : NSManagedObject {
 	WebView *webView;
+	BOOL cachingPage;
 }
 
 -(void)setText:(NSString *)string;
@@ -28,6 +29,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 -(void)cachePage;
 -(void)removePageCache;
+-(NSString *)cachedID;
 
 -(NSMenuItem *)menuItem;
 -(NSString *)growlerTitle;

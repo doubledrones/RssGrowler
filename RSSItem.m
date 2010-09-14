@@ -88,7 +88,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 -(void)cachePage
 {
-	if([[RGDefaults objectForKey:kEnablePageCaching] boolValue] && ![self valueForKey:@"cachedPath"]){
+	if([[RGDefaults objectForKey:kEnablePageCaching] boolValue] && ![self valueForKey:@"cachedPath"] && !cachingPage){
+		cachingPage = YES;
 		NSString *url = [self valueForKey:@"url"];
 		if(url){
 			NSURL *realURL = [NSURL URLWithString:url];
@@ -96,7 +97,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 				NSURLRequest *request = [NSURLRequest requestWithURL:realURL];
 				if(!webView){
 					webView = [[WebView alloc] initWithFrame:NSMakeRect(0,0,200,200)];
-					[webView setResourceLoadDelegate:self];
+					[webView setFrameLoadDelegate:self];
 					[[webView mainFrame] loadRequest:request];
 				}
 			}
@@ -113,6 +114,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 		webView = nil;
 	}
 	[[NSFileManager defaultManager] removeFileAtPath:cachedPath handler:nil];
+}
+
+-(NSString *)cachedID
+{
+	return [[self valueForKey:@"cachedPath"] lastPathComponent];
 }
 
 -(NSMenuItem *)menuItem
@@ -258,7 +264,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 #pragma mark -
 #pragma mark WebView Resources Load Delegate
 
--(void)webView:(WebView *)sender resource:(id)identifier didFailLoadingWithError:(NSError *)error fromDataSource:(WebDataSource *)dataSource
+-(void)webViewFailedWithError:(NSError *)error
 {
     // release the connection, and the data object
 	if(error){
@@ -268,26 +274,41 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	}
 }
 
--(void)webView:(WebView *)sender resource:(id)identifier didFinishLoadingFromDataSource:(WebDataSource *)dataSource
+-(void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error forFrame:(WebFrame *)frame
 {
-	WebArchive *webArchive = [[[webView mainFrame] dataSource] webArchive];
-	NSString *cachesFolder = [[NSApp delegate] cachesFolder];	
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-    if ( ![fileManager fileExistsAtPath:cachesFolder isDirectory:NULL] ) {
-        [fileManager createDirectoryAtPath:cachesFolder attributes:nil];
-    }
-	
-	CFUUIDRef uuid = CFUUIDCreate(NULL);
-	NSString *string = (NSString *)CFUUIDCreateString(NULL, uuid);
-	CFRelease(uuid);
-	NSString *cachePath = [cachesFolder stringByAppendingPathComponent:string];
-	[string release];
-	cachePath = [cachePath stringByAppendingPathExtension:@"webarchive"];
-	NSURL *cacheURL = [NSURL fileURLWithPath:cachePath];
+	[self webViewFailedWithError:error];
+}
 
-	[[webArchive data] writeToURL:cacheURL atomically:NO];
-	[self setValue:cachePath forKey:@"cachedPath"];
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateMenus" object:nil];
+-(void)webView:(WebView *)sender didFailProvisionalLoadWithError:(NSError *)error forFrame:(WebFrame *)frame
+{
+	[self webViewFailedWithError:error];
+}
+
+-(void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
+{
+	if([[RGDefaults objectForKey:kEnablePageCaching] boolValue]){
+		WebArchive *webArchive = [[[webView mainFrame] dataSource] webArchive];
+		NSString *cachesFolder = [[NSApp delegate] cachesFolder];
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		if ( ![fileManager fileExistsAtPath:cachesFolder isDirectory:NULL] ) {
+			[fileManager createDirectoryAtPath:cachesFolder attributes:nil];
+		}
+		
+		NSString *cachedPath = [self valueForKey:@"cachedPath"];
+		if(!cachedPath){
+			CFUUIDRef uuid = CFUUIDCreate(NULL);
+			NSString *string = (NSString *)CFUUIDCreateString(NULL, uuid);
+			CFRelease(uuid);
+			NSString *cachePath = [cachesFolder stringByAppendingPathComponent:string];
+			[string release];
+			cachedPath = [cachePath stringByAppendingPathExtension:@"webarchive"];
+			[self setValue:cachedPath forKey:@"cachedPath"];
+		}
+		NSURL *cacheURL = [NSURL fileURLWithPath:cachedPath];
+		
+		[[webArchive data] writeToURL:cacheURL atomically:NO];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"updateMenus" object:nil];
+	}
 }
 
 -(void)webView:(WebView *)sender

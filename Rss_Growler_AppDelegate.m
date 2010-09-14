@@ -39,6 +39,12 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     return [basePath stringByAppendingPathComponent:@"Rss_Growler"];
 }
 
+- (NSString *)pdfFolder {
+	NSString *appSupport = [self applicationSupportFolder];
+    return [appSupport stringByAppendingPathComponent:@"PDFs"];
+}
+
+
 /**
     Creates, retains, and returns the managed object model for the application 
     by merging all of the models found in the application bundle and all of the 
@@ -55,7 +61,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     [allBundles addObject: [NSBundle mainBundle]];
     [allBundles addObjectsFromArray: [NSBundle allFrameworks]];
     
-    managedObjectModel = [[NSManagedObjectModel mergedModelFromBundles: [allBundles allObjects]] retain];
+	NSURL *momURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Rss_Growler_DataModel" ofType:@"mom"]];
+    managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:momURL];
     [allBundles release];
     
     return managedObjectModel;

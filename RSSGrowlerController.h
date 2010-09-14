@@ -42,6 +42,7 @@ extern NSString *kEnableMenuSubLinks;
 -(void)defaultsChanged:(NSNotification *)aNotification;
 -(void)recreateTimerAndUpdate;
 -(NSArray *)rssFeeds;
+-(NSSet *)allCachedIDs;
 -(void)activateStatusMenu;
 -(void)checkFeeds:(id)sender;
 -(IBAction)updateMenus:(id)sender;

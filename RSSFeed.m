@@ -85,6 +85,18 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	}
 }
 
+-(NSSet *)cachedIDs
+{
+	NSMutableSet *cachedIDs = [NSMutableSet set];
+	id e = [[self feedEntries] objectEnumerator];
+	id item;
+	while(item = [e nextObject]){
+		NSString *cachedID = [item cachedID];
+		if(cachedID)
+			[cachedIDs addObject:cachedID];
+	}
+	return cachedIDs;
+}
 -(NSArray *)firstFeedItems:(unsigned)count
 {
 	if([[self valueForKey:@"showInRecentList"] boolValue]){
@@ -113,9 +125,13 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	}
 	
 	NSArray *feedArray = [[feedEntries allObjects] sortedArrayUsingSelector:@selector(dateCompare:)];
+	unsigned maxNum = (unsigned)[[RGDefaults objectForKey:kMaxEntryHistory] intValue];
 	id e = [feedArray objectEnumerator];
 	id item;
+	unsigned count = 0;
 	while(item = [e nextObject]){
+		if(count++ >= maxNum)
+			break;
 		[menu addItem:[item menuItem]];
 	}
 
