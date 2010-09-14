@@ -1,0 +1,27 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {CLASS = NSDatePicker; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
+        {
+            ACTIONS = {checkFeeds = id; updateMenus = id; }; 
+            CLASS = RSSGrowlerController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                aboutWindow = id; 
+                appDelegate = id; 
+                growlerObject = id; 
+                manageWindow = id; 
+                prefWindow = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {saveAction = id; }; 
+            CLASS = "Rss_Growler_AppDelegate"; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {window = NSWindow; }; 
+            SUPERCLASS = NSObject; 
+        }
+    ); 
+    IBVersion = 1; 
+}
