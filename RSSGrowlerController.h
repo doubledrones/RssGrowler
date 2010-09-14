@@ -27,6 +27,7 @@ extern NSString *kHideTopFromHistory;
 extern NSString *kGrowlClickAction;
 extern NSString *kGrowlListSeparately;
 extern NSString *kEnablePageCaching;
+extern NSString *kShowGrowlsOnLaunch;
 extern NSString *kEnableMenuSubLinks;
 
 @interface RSSGrowlerController : NSObject {
@@ -41,6 +42,7 @@ extern NSString *kEnableMenuSubLinks;
 
 -(void)defaultsChanged:(NSNotification *)aNotification;
 -(void)recreateTimerAndUpdate;
+-(BOOL)pinGrowlNotification;
 -(NSArray *)rssFeeds;
 -(NSSet *)allCachedIDs;
 -(void)activateStatusMenu;

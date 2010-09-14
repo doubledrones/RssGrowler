@@ -18,6 +18,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 #import "RSSFeed.h"
 #import "RSSItem.h"
 #import "Rss_Growler_AppDelegate.h"
+#import "idler.h"
 
 NSString *kCheckIntervalTime = @"Check Interval";
 NSString *kShowTopEntriesCount = @"Show Top Entries Count";
@@ -27,20 +28,26 @@ NSString *kGrowlClickAction = @"Growl Click Action";
 NSString *kGrowlListSeparately = @"Growl List Feeds Separately";
 NSString *kEnablePageCaching = @"Enable Target Page Cache";
 NSString *kEnableMenuSubLinks = @"Enable SubLinks in Menu";
+NSString *kPinGrowlNotifications = @"Pin Growl Notifications";
+NSString *kPinGrowlMinutes = @"Pin Growl Minutes";
+NSString *kShowGrowlsOnLaunch = @"kShowGrowlsOnLaunch";
 
 @implementation RSSGrowlerController
 
 +(id)defaultsDictionary
 {
 	return [NSDictionary dictionaryWithObjectsAndKeys:
-		[NSNumber numberWithDouble:1800.0],		kCheckIntervalTime,
+		[NSNumber numberWithDouble:300.0],		kCheckIntervalTime,
 		[NSNumber numberWithInt:10],			kShowTopEntriesCount,
 		[NSNumber numberWithInt:100],			kMaxEntryHistory,
 		[NSNumber numberWithBool:YES],			kHideTopFromHistory,
 		[NSNumber numberWithBool:NO],			kGrowlClickAction,
 		[NSNumber numberWithBool:NO],			kGrowlListSeparately,
 		[NSNumber numberWithBool:NO],			kEnablePageCaching,
+		[NSNumber numberWithBool:NO],			kShowGrowlsOnLaunch,
 		[NSNumber numberWithBool:YES],			kEnableMenuSubLinks,
+		[NSNumber numberWithBool:NO],			kPinGrowlNotifications,
+		[NSNumber numberWithInt:0],				kPinGrowlMinutes,
 		nil];
 }
 
@@ -93,6 +100,16 @@ NSString *kEnableMenuSubLinks = @"Enable SubLinks in Menu";
 													 userInfo:nil
 													  repeats:YES];
 	[self updateMenus:nil];
+}
+
+-(BOOL)pinGrowlNotification
+{
+	if([[[NSUserDefaults standardUserDefaults] objectForKey:kPinGrowlNotifications] boolValue]){
+		if([[[NSUserDefaults standardUserDefaults] objectForKey:kPinGrowlMinutes] intValue] < (idleTime() / 60.0)){
+			return YES;
+		}
+	}
+	return NO;
 }
 
 -(NSArray *)rssFeeds

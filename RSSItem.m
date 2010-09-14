@@ -70,19 +70,41 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 -(NSString *)growlerTitle
 {
-	if([[self valueForKey:@"feed"] isTracFeed]){
-		NSString *growler = [[[self valueForKey:@"title"] componentsSeparatedByString:@":"] objectAtIndex:0];
+	RSSFeed *feed = [self valueForKey:@"feed"];
+	if([feed isTracFeed]){
+		NSString *origTitle = [self valueForKey:@"title"];
+		NSRange colonRange = [origTitle rangeOfString:@":"];
+		NSString *growler = origTitle;
+		if(colonRange.location != NSNotFound)
+			growler = [origTitle substringToIndex:colonRange.location];
 		NSString *author = [self valueForKey:@"author"];
 		if(author)
 			growler = [NSString stringWithFormat:@"%@: %@", growler, author];
 		return growler;
-	}
-	else
+	} else if([feed isTwitterFeed]){
+		NSString *origTitle = [self valueForKey:@"title"];
+		NSRange colonRange = [origTitle rangeOfString:@":"];
+		NSString *growler = origTitle;
+		if(colonRange.location != NSNotFound)
+			growler = [origTitle substringToIndex:colonRange.location];
+		growler = [NSString stringWithFormat:@"Twitter: %@", growler];
+		return growler;
+	} else {
 		return [self valueForKey:@"title"];
+	}
 }
 
 -(NSString *)growlerDescription
 {
+	RSSFeed *feed = [self valueForKey:@"feed"];
+	if([feed isTwitterFeed]){
+		NSString *origText = [self valueForKey:@"text"];
+		NSRange colonRange = [origText rangeOfString:@": "];
+		NSString *growler = origText;
+		if(colonRange.location != NSNotFound)
+			growler = [origText substringFromIndex:colonRange.location + colonRange.length];
+		return growler;
+	}
 	return [self valueForKey:@"text"];
 }
 
@@ -126,19 +148,21 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	NSString *title = [self valueForKey:@"title"];
 	if([[self valueForKey:@"feed"] isTracFeed]){
 		NSRange revRange = [title rangeOfString:@"Revision "];
-		NSMutableString *newStr = [NSMutableString stringWithString:title];
-		[newStr replaceCharactersInRange:revRange withString:@""];
-		title = newStr;
+		if(revRange.location != NSNotFound){
+			NSMutableString *newStr = [NSMutableString stringWithString:title];
+			[newStr replaceCharactersInRange:revRange withString:@""];
+			title = newStr;
 #if 0
-		NSArray *comps = [newStr componentsSeparatedByString:@": "];
-		int count = [comps count];
-		NSString *sec = [[comps subarrayWithRange:NSMakeRange(1, count - 1)] componentsJoinedByString:@": "];
-		NSString *author = [[[self valueForKey:@"author"] componentsSeparatedByString:@"@"] objectAtIndex:0];
-		if(author)
-			title = [NSString stringWithFormat:@"%@: [%@] %@", [comps objectAtIndex:0], author, sec];
-		else
-			title = [NSString stringWithFormat:@"%@: %@", [comps objectAtIndex:0], sec];
+			NSArray *comps = [newStr componentsSeparatedByString:@": "];
+			int count = [comps count];
+			NSString *sec = [[comps subarrayWithRange:NSMakeRange(1, count - 1)] componentsJoinedByString:@": "];
+			NSString *author = [[[self valueForKey:@"author"] componentsSeparatedByString:@"@"] objectAtIndex:0];
+			if(author)
+				title = [NSString stringWithFormat:@"%@: [%@] %@", [comps objectAtIndex:0], author, sec];
+			else
+				title = [NSString stringWithFormat:@"%@: %@", [comps objectAtIndex:0], sec];
 #endif
+		}
 	}
 	NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:title
 													  action:@selector(openFeed:)
@@ -205,15 +229,20 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 		NSString *substr = nil;
 		NSRange endRange;
 		if(regularRange.location != NSNotFound){
-			substr = [rdar substringFromIndex:regularRange.location];
-			endRange = [substr rangeOfString:@">"];
+			substr = [rdar substringFromIndex:regularRange.location + 1];
+			endRange = NSMakeRange(0, [substr rangeOfString:@">"].location);
+			if(endRange.length == NSNotFound)
+				endRange.length = [substr length];
+			descr = [substr substringWithRange:NSMakeRange(endRange.location + endRange.length + 2, [substr length] - (endRange.location + endRange.length) - 2)];
 		} else {
 			regularRange = [rdar rangeOfString:@"rdar://"];
 			substr = [rdar substringFromIndex:regularRange.location];
-			endRange = [substr rangeOfString:@" "];
+			endRange = NSMakeRange(0, [substr rangeOfString:@" "].location);
+			if(endRange.length == NSNotFound)
+				endRange.length = [substr length];
+			descr = [substr substringWithRange:NSMakeRange(endRange.location + endRange.length + 1, [substr length] - (endRange.location + endRange.length) - 1)];
 		}
-		link = [substr substringWithRange:NSMakeRange(1, endRange.location - 1)];
-		descr = [substr substringWithRange:NSMakeRange(endRange.location + endRange.length, [substr length] - (endRange.location + endRange.length))];
+		link = [substr substringWithRange:endRange];
 		
 		SubLink *subLink = [NSEntityDescription insertNewObjectForEntityForName:@"SubLink"
 														 inManagedObjectContext:[self managedObjectContext]];
@@ -239,14 +268,18 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 		NSString *substr = nil;
 		NSRange endRange;
 		if(regularRange.location != NSNotFound){
-			substr = [rdar substringFromIndex:regularRange.location];
-			endRange = [substr rangeOfString:@">"];
+			substr = [rdar substringFromIndex:regularRange.location + 1];
+			endRange = NSMakeRange(0, [substr rangeOfString:@">"].location);
+			if(endRange.length == NSNotFound)
+				endRange.length = [substr length];
 		} else {
 			regularRange = [rdar rangeOfString:@"http://"];
 			substr = [rdar substringFromIndex:regularRange.location];
-			endRange = [substr rangeOfString:@" "];
+			endRange = NSMakeRange(0, [substr rangeOfString:@" "].location);
+			if(endRange.length == NSNotFound)
+				endRange.length = [substr length];
 		}
-		link = [substr substringWithRange:NSMakeRange(1, endRange.location - 1)];
+		link = [substr substringWithRange:endRange];
 		
 		SubLink *subLink = [NSEntityDescription insertNewObjectForEntityForName:@"SubLink"
 														 inManagedObjectContext:[self managedObjectContext]];

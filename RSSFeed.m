@@ -34,8 +34,14 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 -(void)awakeFromFetch
 {
-	[self setValue:[NSDate distantPast] forKeyPath:@"lastFetchDate"];
-	isTracFeed = ([[self valueForKey:@"generator"] rangeOfString:@"Trac"].location != NSNotFound);
+	if(![[NSUserDefaults standardUserDefaults] boolForKey:kShowGrowlsOnLaunch])
+		[self setValue:[NSDate distantPast] forKeyPath:@"lastFetchDate"];
+	
+	NSString *generator = [self valueForKey:@"generator"];
+	if(generator){
+		isTracFeed = ([generator rangeOfString:@"Trac"].location != NSNotFound);
+		isTwitterFeed = ([generator rangeOfString:@"Twitter"].location != NSNotFound);
+	}
 	[self checkFeed];
 }
 
@@ -47,6 +53,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	}
 
 	if([self url]){
+		if([[self url] rangeOfString:@"twitter.com"].location != NSNotFound){
+			[self setValue:@"Twitter" forKey:@"generator"];
+			isTwitterFeed = YES;
+		}
+		
 		NSURL *realURL = [NSURL URLWithString:[self url]];
 		if(![realURL isFileURL]){
 			if([realURL host] == nil)
@@ -139,7 +150,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 													  action:@selector(openFeed:)
 											   keyEquivalent:@""];
 	[menuItem setTarget:self];
-	[menuItem setSubmenu:[menu autorelease]];
+	if([feedEntries count] > 0)
+		[menuItem setSubmenu:menu];
+
+	[menu autorelease];
+	
 	return [menuItem autorelease];
 }
 
@@ -266,6 +281,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	return isTracFeed;
 }
 
+-(BOOL)isTwitterFeed
+{
+	return isTwitterFeed;
+}
+
 -(void)setDidConnect:(BOOL)aBool
 {
 	didConnect = aBool;
@@ -325,7 +345,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 -(void)parseDocument:(NSXMLDocument *)document
 {
 	NSXMLNode *rootNode = [document rootElement];
-	if([[rootNode name] isEqualToString:@"rss"]){
+	if([[rootNode name] isEqualToString:@"rss"] || [[rootNode name] isEqualToString:@"rdf:RDF"]){
 		NSArray *children = [rootNode children];
 		id e = [children objectEnumerator];
 		id anObject;
@@ -334,6 +354,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 				[self parseChannel:anObject];
 			}
 		}
+		if([[rootNode name] isEqualToString:@"rdf:RDF"])
+			[self parseItems:rootNode];
 	}
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"updateMenus" object:nil];	
 }
@@ -343,7 +365,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	NSArray *children = [channel children];
 	id e = [children objectEnumerator];
 	id anObject;
-	NSDate *newestDate = nil;
 	while(anObject = [e nextObject]){
 		NSString *name = [anObject name];
 		NSString *value = [anObject objectValue];
@@ -354,16 +375,30 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 		if([name isEqualToString:@"link"]){
 			[self setPrimitiveValue:value forKey:@"link"];
 		}
+		if([name isEqualToString:@"generator"]){
+			[self setValue:value forKey:@"generator"];
+			isTracFeed = ([value rangeOfString:@"Trac"].location != NSNotFound);
+			isTwitterFeed = ([value rangeOfString:@"Twitter"].location != NSNotFound);
+		}
+	}
+	[self parseItems:channel];
+}
+
+-(void)parseItems:(NSXMLNode *)node
+{
+	NSArray *children = [node children];
+	NSEnumerator *e = [children objectEnumerator];
+	NSDate *newestDate = nil;
+	id anObject;
+	while(anObject = [e nextObject]){
+		NSString *name = [anObject name];
 		if([name isEqualToString:@"item"]){
 			NSDate *itemDate = [self parseItem:anObject];
 			if(!newestDate || ([itemDate compare:newestDate] == NSOrderedDescending))
 				newestDate = itemDate;
 		}
-		if([name isEqualToString:@"generator"]){
-			[self setValue:value forKey:@"generator"];
-			isTracFeed = ([value rangeOfString:@"Trac"].location != NSNotFound);
-		}
-	}
+	}		
+	
 	[self setValue:newestDate forKeyPath:@"lastFetchDate"];
 }
 
@@ -381,40 +416,54 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	NSString *itemDescription = nil;
 
 	while(anObject = [e nextObject]){
-		NSString *name = [anObject name];
+			NSString *name = [anObject name];
 		NSString *value = [anObject stringValue];
 		if([name isEqualToString:@"author"])
 			itemAuthor = value;
-		if([name isEqualToString:@"pubDate"])
+		if([name isEqualToString:@"pubDate"] || [name isEqualToString:@"dc:date"])
 			itemPubDate = [NSDate dateWithNaturalLanguageString:[anObject objectValue]];
-		if([name isEqualToString:@"title"])
+		if([name isEqualToString:@"title"] || [name isEqualToString:@"dc:title"])
 			itemTitle = value;
-		if([name isEqualToString:@"link"])
+		if([name isEqualToString:@"link"] || [name isEqualToString:@"dc:source"])
 			itemLink = value;
-		if([name isEqualToString:@"guid"])
+		if([name isEqualToString:@"guid"] || [name isEqualToString:@"dc:date"])
 			itemGuid = value;
 		if([name isEqualToString:@"description"])
 			itemDescription = value;
 	}
 	
 	NSDate *lastFetchDate = [self valueForKey:@"lastFetchDate"];
-	if([itemPubDate compare:lastFetchDate] == NSOrderedDescending){
-		RSSItem *item = [NSEntityDescription insertNewObjectForEntityForName:@"RSSItem"
-													  inManagedObjectContext:[self managedObjectContext]];
-		[item setValue:itemAuthor forKeyPath:@"author"];
-		[item setValue:itemPubDate forKeyPath:@"date"];
-		[item setValue:itemTitle forKeyPath:@"title"];
-		[item setValue:itemLink forKeyPath:@"url"];
-		[item setValue:itemGuid forKeyPath:@"guid"];
-		[item setText:itemDescription];
+	if([itemPubDate compare:lastFetchDate] == NSOrderedDescending || !lastFetchDate){
+		NSManagedObjectContext *moc = [self managedObjectContext];
+		NSEntityDescription *entityDescription = [NSEntityDescription entityForName:@"RSSItem"
+															 inManagedObjectContext:moc];
+		NSFetchRequest *request = [[[NSFetchRequest alloc] init] autorelease];
+		[request setEntity:entityDescription];
+		NSPredicate *predicate = [NSPredicate predicateWithFormat:@"guid like %@", itemGuid];
+		[request setPredicate:predicate];
+		NSError *error = nil;
+		NSArray *array = [moc executeFetchRequest:request error:&error];
+		if(error)
+			NSLog([error description]);
 		
-		[self addFeedEntry:item];
-		
-		if(![lastFetchDate isEqualToDate:[NSDate distantPast]]){ // otherwise this is a first time load
-			[[NSNotificationCenter defaultCenter] postNotificationName:@"newRssItem"
-																object:nil
-															  userInfo:[NSDictionary dictionaryWithObject:item
-																								   forKey:@"RSSItem"]];
+		if([array count] == 0){
+			RSSItem *item = [NSEntityDescription insertNewObjectForEntityForName:@"RSSItem"
+														  inManagedObjectContext:moc];
+			[item setValue:itemAuthor forKeyPath:@"author"];
+			[item setValue:itemPubDate forKeyPath:@"date"];
+			[item setValue:itemTitle forKeyPath:@"title"];
+			[item setValue:itemLink forKeyPath:@"url"];
+			[item setValue:itemGuid forKeyPath:@"guid"];
+			[item setText:itemDescription];
+			
+			[self addFeedEntry:item];
+			
+			if(!lastFetchDate || ![lastFetchDate isEqualToDate:[NSDate distantPast]]){ // otherwise this is a first time load
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"newRssItem"
+																	object:nil
+																  userInfo:[NSDictionary dictionaryWithObject:item
+																									   forKey:@"RSSItem"]];
+			}
 		}
 	}
 	
@@ -478,11 +527,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 -(void)connection:(NSURLConnection *)connection
         didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
 {
-    if ([challenge previousFailureCount] == 0) {
+    if ([challenge previousFailureCount] == 0 && [self login] && [self password]) {
         NSURLCredential *newCredential;
         newCredential=[NSURLCredential credentialWithUser:[self login]
                                                  password:[self password]
-                                              persistence:NSURLCredentialPersistenceForSession];
+                                              persistence:NSURLCredentialPersistenceNone];
         [[challenge sender] useCredential:newCredential
                forAuthenticationChallenge:challenge];
     } else {

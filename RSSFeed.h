@@ -23,6 +23,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	NSMutableData *feedData;
 	BOOL didConnect;
 	BOOL isTracFeed;
+	BOOL isTwitterFeed;
 }
 
 -(NSString *)name;
@@ -35,6 +36,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 -(void)removeFeedEntries:(NSSet *)feedEntriesToRemove;
 -(void)parseDocument:(NSXMLDocument *)document;
 -(void)parseChannel:(NSXMLNode *)channel;
+-(void)parseItems:(NSXMLNode *)node;
 -(NSDate *)parseItem:(NSXMLNode *)item;
 -(void)checkFeed;
 -(void)cleanupOldItems;
@@ -45,5 +47,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 -(BOOL)didConnect;
 -(void)setDidConnect:(BOOL)aBool;
 -(BOOL)isTracFeed;
+-(BOOL)isTwitterFeed;
 
 @end

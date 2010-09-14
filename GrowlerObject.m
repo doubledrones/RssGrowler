@@ -111,7 +111,7 @@ NSString *kNewRSSEmptyKey = @"RSS feeds with no name";
    notificationName:notificationName
 		   iconData:nil
 		   priority:0
-		   isSticky:NO
+		   isSticky:[controller pinGrowlNotification]
 	   clickContext:uuidString];
 	CFRelease(uuidString);
 }
